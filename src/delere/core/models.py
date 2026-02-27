@@ -77,6 +77,7 @@ class PageText(BaseModel):
     page_number: int
     full_text: str
     words: list[tuple[float, float, float, float, str, int, int, int]]
+    is_ocr: bool = False
 
 
 class RedactionResult(BaseModel):
