@@ -42,6 +42,7 @@ class AuditManifest(BaseModel):
     entries: list[AuditEntry]
     metadata_stripped: bool
     secure_redaction: bool
+    ocr_pages: list[int] = Field(default_factory=list)
 
 
 def _sha256_file(path: Path) -> str:
@@ -63,6 +64,7 @@ def create_manifest(
     output_path: Path,
     confidence_threshold: float,
     review_mode: bool = False,
+    ocr_pages: list[int] | None = None,
 ) -> AuditManifest:
     """Build an audit manifest from redaction results."""
     entries = []
@@ -90,6 +92,7 @@ def create_manifest(
         entries=entries,
         metadata_stripped=not review_mode,
         secure_redaction=not review_mode,
+        ocr_pages=sorted(ocr_pages) if ocr_pages else [],
     )
 
 

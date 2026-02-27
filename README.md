@@ -73,7 +73,7 @@ Delere uses a multi-layer detection pipeline. Each layer operates independently,
 ### Pipeline
 
 ```
-PDF → Text Extraction → [Regex + SpaCy + LLM] → Deduplicate → Filter → Review → Redact → Audit
+PDF → Text Extraction (native or OCR) → [Regex + SpaCy + LLM] → Deduplicate → Filter → Review → Redact → Audit
 ```
 
 When multiple detectors flag the same text on the same page, the highest-confidence detection wins. The configurable confidence threshold (default 0.6) filters out low-certainty matches.
@@ -96,6 +96,19 @@ SpaCy requires a language model:
 
 ```bash
 python -m spacy download en_core_web_sm
+```
+
+For OCR support (scanned/image-only PDFs), install Tesseract:
+
+```bash
+# macOS
+brew install tesseract
+
+# Ubuntu/Debian
+sudo apt install tesseract-ocr
+
+# Windows
+# Download from https://github.com/tesseract-ocr/tesseract
 ```
 
 Requires Python 3.12+.
@@ -132,6 +145,20 @@ Point delere at a directory to process all PDFs with a progress bar:
 ```bash
 delere redact ./documents/ --compliance pipeda --output ./redacted/
 ```
+
+### Redact Scanned/Image-Only PDFs
+
+Delere can process scanned documents and image-only PDFs using OCR (Optical Character Recognition). When `--ocr` is enabled, pages that contain images but no embedded text are automatically detected and processed with Tesseract OCR. Pages with existing text layers use native extraction for speed and accuracy.
+
+```bash
+# Enable OCR for scanned documents
+delere redact scanned_document.pdf --compliance pipeda --ocr
+
+# Specify OCR language (defaults to English)
+delere redact document_fr.pdf --compliance pipeda --ocr --ocr-language fra
+```
+
+For scanned pages, delere paints over PII regions within the image rather than removing the entire page image. The redacted areas are baked into the final PDF and cannot be recovered. The audit manifest records which pages were processed via OCR.
 
 ### Tune Detection
 
@@ -177,7 +204,7 @@ For organizations that cannot use AI at all, the LLM layer is off by default. Re
 | Text recovery from redacted PDF | Content stream removal: text is deleted, not overlaid |
 | Incremental save data recovery | Full file rewrite with `garbage=4` collection |
 | Metadata leakage | Info dictionary, XMP, annotations, and form fields stripped |
-| Image-based text recovery | Images overlapping redacted regions completely removed |
+| Image-based text recovery | Images overlapping redacted regions completely removed (native pages) or painted over (scanned pages) |
 | Vector graphics recovery | Line art touching redacted areas removed |
 | Audit log PII exposure | Only SHA-256 hashes of detected text stored, never plaintext |
 | Data exfiltration via LLM | All LLM processing is local via Ollama, no external API calls |
@@ -196,6 +223,8 @@ Delere is configurable through CLI flags:
 | `--ai` | off | Enable LLM detection layer |
 | `--model` | `llama3.2` | Ollama model for LLM detection |
 | `--output` | alongside input | Output file or directory |
+| `--ocr` | off | Enable OCR for scanned/image-only pages |
+| `--ocr-language` | `eng` | Tesseract language code (e.g., `eng`, `fra`, `deu`) |
 
 Redaction appearance and behavior (fill color, metadata stripping, annotation removal, flattening) are configurable programmatically when using delere as a library.
 
