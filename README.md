@@ -10,6 +10,18 @@ Delere is a document redaction tool built for regulated industries where data pr
 
 ---
 
+## Disclaimer
+
+Delere is a general-purpose redaction tool. The built-in compliance profiles (PIPEDA, GDPR, HIPAA) provide broad coverage for common PII patterns, but they are not guaranteed to catch every sensitive identifier in every document type.
+
+For use in production, enterprise, or regulated environments, the detection pipeline should be calibrated to the specific content types, document formats, and data patterns present in your workflows. Different industries, jurisdictions, and document structures may require custom regex patterns, adjusted confidence thresholds, additional detection layers, or domain-specific compliance profiles.
+
+**This tool is provided as-is and does not constitute legal or compliance advice.** Organizations operating under regulatory obligations should validate redaction outputs against their specific requirements and conduct testing with representative document samples before deploying to production.
+
+For questions about enterprise calibration, custom compliance profiles, or consulting engagements, please reach out via [GitHub Issues](https://github.com/r-oc/delere/issues).
+
+---
+
 ## Why Delere
 
 Most PDF redaction tools work by placing a visual overlay on top of text. A black rectangle is drawn over the sensitive content, but the underlying data stays in the file. Anyone with a basic PDF reader or text extraction library can pull it right back out. That's not redaction. It's cosmetic.
@@ -229,18 +241,6 @@ Delere is configurable through CLI flags:
 | `--ocr-language` | `eng` | Tesseract language code (e.g., `eng`, `fra`, `deu`) |
 
 Redaction appearance and behavior (fill color, metadata stripping, annotation removal, flattening) are configurable programmatically when using delere as a library.
-
----
-
-## Disclaimer
-
-Delere is a general-purpose redaction tool. The built-in compliance profiles (PIPEDA, GDPR, HIPAA) provide broad coverage for common PII patterns, but they are not guaranteed to catch every sensitive identifier in every document type.
-
-For use in production, enterprise, or regulated environments, the detection pipeline should be calibrated to the specific content types, document formats, and data patterns present in your workflows. Different industries, jurisdictions, and document structures may require custom regex patterns, adjusted confidence thresholds, additional detection layers, or domain-specific compliance profiles.
-
-**This tool is provided as-is and does not constitute legal or compliance advice.** Organizations operating under regulatory obligations should validate redaction outputs against their specific requirements and conduct testing with representative document samples before deploying to production.
-
-For questions about enterprise calibration, custom compliance profiles, or consulting engagements, please reach out via [GitHub Issues](https://github.com/r-oc/delere/issues).
 
 ---
 
