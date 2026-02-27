@@ -1,0 +1,258 @@
+name: gdpr
+display_name: "GDPR (EU)"
+description: >
+  General Data Protection Regulation. Protects the personal data and privacy
+  of individuals within the European Union. Applies to any organization
+  processing EU resident data regardless of the organization's location.
+version: "1.0"
+
+categories:
+  - name
+  - email
+  - phone
+  - address
+  - date_of_birth
+  - national_id
+  - iban
+  - vat_number
+  - credit_card
+  - ip_address
+  - passport
+  - health_id
+  - financial
+
+patterns:
+  - name: email_address
+    pattern: '\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b'
+    category: email
+    confidence: 0.95
+
+  - name: iban_generic
+    pattern: '\b[A-Z]{2}\d{2}[A-Z0-9]{4}\d{7}[A-Z0-9]{0,16}\b'
+    category: iban
+    confidence: 0.85
+
+  - name: credit_card_number
+    pattern: '\b(?:4\d{3}|5[1-5]\d{2}|3[47]\d{2}|6(?:011|5\d{2}))[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{0,4}\b'
+    category: credit_card
+    confidence: 0.9
+
+  - name: ipv4_address
+    pattern: '\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b'
+    category: ip_address
+    confidence: 0.8
+
+  - name: ipv6_address
+    pattern: '\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b'
+    category: ip_address
+    confidence: 0.8
+
+  # National ID numbers by country
+
+  - name: french_insee_nir
+    pattern: '\b[12]\d{2}(?:0[1-9]|1[0-2])\d{2}\d{3}\d{3}\d{2}\b'
+    category: national_id
+    confidence: 0.85
+
+  - name: spanish_dni
+    pattern: '\b\d{8}[A-HJ-NP-TV-Z]\b'
+    category: national_id
+    confidence: 0.8
+
+  - name: spanish_nie
+    pattern: '\b[XYZ]\d{7}[A-HJ-NP-TV-Z]\b'
+    category: national_id
+    confidence: 0.8
+
+  - name: italian_codice_fiscale
+    pattern: '\b[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]\b'
+    category: national_id
+    confidence: 0.9
+
+  - name: german_steuer_id
+    pattern: '\b[1-9]\d{10}\b'
+    category: national_id
+    confidence: 0.7
+    requires_keyword_proximity: true
+    keywords:
+      - "Steuer-ID"
+      - "Steueridentifikationsnummer"
+      - "tax ID"
+      - "IdNr"
+      - "Identifikationsnummer"
+    keyword_window: 80
+
+  - name: dutch_bsn
+    pattern: '\b\d{9}\b'
+    category: national_id
+    confidence: 0.65
+    requires_keyword_proximity: true
+    keywords:
+      - "BSN"
+      - "burgerservicenummer"
+      - "citizen service"
+      - "sofi"
+    keyword_window: 60
+
+  - name: swedish_personnummer
+    pattern: '\b\d{6}[-+]?\d{4}\b'
+    category: national_id
+    confidence: 0.7
+    requires_keyword_proximity: true
+    keywords:
+      - "personnummer"
+      - "personal number"
+      - "person number"
+    keyword_window: 60
+
+  - name: irish_pps
+    pattern: '\b\d{7}[A-Z]{1,2}\b'
+    category: national_id
+    confidence: 0.7
+    requires_keyword_proximity: true
+    keywords:
+      - "PPS"
+      - "PPSN"
+      - "personal public service"
+    keyword_window: 60
+
+  # EU VAT numbers (personal data when linked to sole traders)
+
+  - name: vat_germany
+    pattern: '\bDE\d{9}\b'
+    category: vat_number
+    confidence: 0.85
+
+  - name: vat_france
+    pattern: '\bFR[0-9A-Z]{2}\d{9}\b'
+    category: vat_number
+    confidence: 0.85
+
+  - name: vat_spain
+    pattern: '\bES[0-9A-Z]\d{7}[0-9A-Z]\b'
+    category: vat_number
+    confidence: 0.85
+
+  - name: vat_italy
+    pattern: '\bIT\d{11}\b'
+    category: vat_number
+    confidence: 0.85
+
+  - name: vat_netherlands
+    pattern: '\bNL\d{9}B\d{2}\b'
+    category: vat_number
+    confidence: 0.85
+
+  # Phone numbers by country
+
+  - name: phone_germany
+    pattern: '\b\+?49[-\s]?(?:\(?0?\d{2,5}\)?[-\s]?)?\d{4,10}\b'
+    category: phone
+    confidence: 0.75
+
+  - name: phone_france
+    pattern: '\b\+?33[-\s]?[1-9](?:[-\s]?\d{2}){4}\b'
+    category: phone
+    confidence: 0.75
+
+  - name: phone_spain
+    pattern: '\b\+?34[-\s]?[6-9]\d{8}\b'
+    category: phone
+    confidence: 0.75
+
+  - name: phone_italy
+    pattern: '\b\+?39[-\s]?\d{2,4}[-\s]?\d{6,8}\b'
+    category: phone
+    confidence: 0.75
+
+  - name: phone_uk
+    pattern: '\b\+?44[-\s]?(?:\(?0?\d{4}\)?[-\s]?\d{6}|\(?0?\d{3}\)?[-\s]?\d{3}[-\s]?\d{4})\b'
+    category: phone
+    confidence: 0.75
+
+  - name: phone_e164
+    pattern: '\+[1-9]\d{6,14}\b'
+    category: phone
+    confidence: 0.7
+
+  # Postal codes
+
+  # Street addresses: number + street name + street type suffix.
+  - name: street_address
+    pattern: '\b\d{1,6}\s+[A-Z][A-Za-z\-'']+(?:\s+[A-Z][A-Za-z\-'']+)*\s+(?:ST|STREET|AVE|AVENUE|BLVD|BOULEVARD|DR|DRIVE|RD|ROAD|LN|LANE|CT|COURT|PL|PLACE|WAY|CRES|CRESCENT|CIR|CIRCLE|TERR|TERRACE|PKWY|PARKWAY|HWY|HIGHWAY|TRAIL|TRL|COVE|RUN|PASS|LOOP|BEND|GLEN|RIDGE|PARK|GATE|PATH|ROW|MEWS|CLOSE|STRASSE|GASSE|WEG|PLATZ|RUE|CHEMIN|ALLEE)\b'
+    category: address
+    confidence: 0.85
+
+  - name: uk_postal_code
+    pattern: '\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b'
+    category: address
+    confidence: 0.7
+
+  - name: date_of_birth_dmy
+    pattern: '\b(?:0?[1-9]|[12]\d|3[01])[\/\-\.](?:0?[1-9]|1[0-2])[\/\-\.]\d{2,4}\b'
+    category: date_of_birth
+    confidence: 0.6
+    requires_keyword_proximity: true
+    keywords:
+      - "DOB"
+      - "date of birth"
+      - "birth date"
+      - "born"
+      - "Geburtsdatum"
+      - "date de naissance"
+      - "fecha de nacimiento"
+      - "data di nascita"
+    keyword_window: 60
+
+  - name: date_ddmonyyyy
+    pattern: '\b(?:0?[1-9]|[12]\d|3[01])[-\s]?(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[-\s,]?\d{2,4}\b'
+    category: date_of_birth
+    confidence: 0.75
+
+  - name: date_monddyyyy
+    pattern: '\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[-\s.]?(?:0?[1-9]|[12]\d|3[01])[,\s]+\d{2,4}\b'
+    category: date_of_birth
+    confidence: 0.75
+
+  - name: date_iso8601
+    pattern: '\b(?:19|20)\d{2}[-\/](?:0[1-9]|1[0-2])[-\/](?:0[1-9]|[12]\d|3[01])\b'
+    category: date_of_birth
+    confidence: 0.7
+    requires_keyword_proximity: true
+    keywords:
+      - "DOB"
+      - "date of birth"
+      - "birth"
+      - "born"
+      - "Geburtsdatum"
+      - "date de naissance"
+    keyword_window: 80
+
+  - name: form_field_name
+    pattern: '(?:(?:sur|last|family|first|given|middle|maiden|vor|nach)\s*(?:name|nom|Name)(?:\s*\(s\))?\s*[:\-]?\s*)([A-Za-z][A-Za-z''\-]{1,}(?:\s+(?!(?:sur|last|family|first|given|middle|maiden|vor|nach)\s*(?:name|nom|Name)(?:\s*\(s\))?)[A-Za-z][A-Za-z''\-]{1,})*)'
+    category: name
+    confidence: 0.85
+
+spacy_mappings:
+  - spacy_label: PERSON
+    category: name
+    confidence: 0.8
+  - spacy_label: GPE
+    category: address
+    confidence: 0.6
+  - spacy_label: LOC
+    category: address
+    confidence: 0.5
+  - spacy_label: DATE
+    category: date_of_birth
+    confidence: 0.5
+  - spacy_label: ORG
+    category: name
+    confidence: 0.4
+
+llm_prompt_context: >
+  This document may contain personal data protected by the EU General Data
+  Protection Regulation (GDPR). Look for: full names, national identity numbers,
+  IBANs, VAT numbers, email addresses, phone numbers, physical addresses,
+  dates of birth, IP addresses, and any special category data (health, racial
+  or ethnic origin, political opinions, religious beliefs, biometric data).

@@ -1,0 +1,182 @@
+name: pipeda
+display_name: "PIPEDA (Canada)"
+description: >
+  Personal Information Protection and Electronic Documents Act.
+  Governs how private-sector organizations collect, use, and disclose
+  personal information in the course of commercial activities across Canada.
+version: "1.0"
+
+categories:
+  - name
+  - email
+  - phone
+  - sin
+  - address
+  - date_of_birth
+  - health_id
+  - passport
+  - credit_card
+  - financial
+  - ip_address
+
+patterns:
+  - name: canadian_sin
+    pattern: '\b\d{3}[-\s]?\d{3}[-\s]?\d{3}\b'
+    category: sin
+    confidence: 0.85
+    requires_keyword_proximity: true
+    keywords:
+      - "SIN"
+      - "social insurance"
+      - "insurance number"
+      - "numero d'assurance sociale"
+      - "NAS"
+    keyword_window: 80
+
+  - name: canadian_phone
+    pattern: '\b(?:\+?1[-\s]?)?\(?[2-9]\d{2}\)?[-\s.]?[2-9]\d{2}[-\s.]?\d{4}\b'
+    category: phone
+    confidence: 0.8
+
+  - name: canadian_postal_code
+    pattern: '\b[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z][-\s]?\d[ABCEGHJ-NPRSTV-Z]\d\b'
+    category: address
+    confidence: 0.85
+
+  - name: email_address
+    pattern: '\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b'
+    category: email
+    confidence: 0.95
+
+  - name: credit_card_number
+    pattern: '\b(?:4\d{3}|5[1-5]\d{2}|3[47]\d{2}|6(?:011|5\d{2}))[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{0,4}\b'
+    category: credit_card
+    confidence: 0.9
+
+  - name: ohip_health_card
+    pattern: '\b\d{4}[-\s]?\d{3}[-\s]?\d{3}\b'
+    category: health_id
+    confidence: 0.7
+    requires_keyword_proximity: true
+    keywords:
+      - "OHIP"
+      - "health card"
+      - "health number"
+      - "Ontario health"
+      - "carte sante"
+    keyword_window: 80
+
+  - name: quebec_ramq
+    pattern: '\b[A-Z]{4}\d{8}\b'
+    category: health_id
+    confidence: 0.75
+    requires_keyword_proximity: true
+    keywords:
+      - "RAMQ"
+      - "health card"
+      - "carte soleil"
+      - "numero d'assurance maladie"
+    keyword_window: 80
+
+  - name: canadian_passport
+    pattern: '\b[A-Z]{2}\d{6}\b'
+    category: passport
+    confidence: 0.7
+    requires_keyword_proximity: true
+    keywords:
+      - "passport"
+      - "passeport"
+      - "travel document"
+    keyword_window: 60
+
+  # Street addresses: number + street name + street type suffix.
+  # Covers common Canadian/North American street type abbreviations.
+  - name: street_address
+    pattern: '\b\d{1,6}\s+[A-Z][A-Za-z\-'']+(?:\s+[A-Z][A-Za-z\-'']+)*\s+(?:ST|STREET|AVE|AVENUE|BLVD|BOULEVARD|DR|DRIVE|RD|ROAD|LN|LANE|CT|COURT|PL|PLACE|WAY|CRES|CRESCENT|CIR|CIRCLE|TERR|TERRACE|PKWY|PARKWAY|HWY|HIGHWAY|TRAIL|TRL|COVE|RUN|PASS|LOOP|BEND|GLEN|RIDGE|PARK|GATE|PATH|ROW|MEWS|CLOSE)\b'
+    category: address
+    confidence: 0.85
+
+  # Street name without a number (e.g. "FIREFLY RD", "FREY CRES")
+  # Keyword-gated to avoid false positives on random word + suffix combos.
+  - name: street_name_only
+    pattern: '\b[A-Z][A-Z\-'']+(?:\s+[A-Z][A-Z\-'']+)*\s+(?:ST|STREET|AVE|AVENUE|BLVD|BOULEVARD|DR|DRIVE|RD|ROAD|LN|LANE|CT|COURT|PL|PLACE|WAY|CRES|CRESCENT|CIR|CIRCLE|TERR|TERRACE|PKWY|PARKWAY|HWY|HIGHWAY|TRAIL|TRL)\b'
+    category: address
+    confidence: 0.75
+    requires_keyword_proximity: true
+    keywords:
+      - "address"
+      - "residence"
+      - "street"
+      - "mailing"
+      - "civic"
+      - "adresse"
+    keyword_window: 120
+
+  - name: ipv4_address
+    pattern: '\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b'
+    category: ip_address
+    confidence: 0.8
+
+  - name: date_of_birth_mdy
+    pattern: '\b(?:0?[1-9]|1[0-2])[\/\-](?:0?[1-9]|[12]\d|3[01])[\/\-]\d{2,4}\b'
+    category: date_of_birth
+    confidence: 0.6
+    requires_keyword_proximity: true
+    keywords:
+      - "DOB"
+      - "date of birth"
+      - "birth date"
+      - "born"
+      - "date de naissance"
+    keyword_window: 60
+
+  # DDMonYYYY -- 08Sep1989, 15Jan2001, 3-Mar-1975 (common on government forms)
+  - name: date_ddmonyyyy
+    pattern: '\b(?:0?[1-9]|[12]\d|3[01])[-\s]?(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[-\s,]?\d{2,4}\b'
+    category: date_of_birth
+    confidence: 0.75
+
+  # MonDDYYYY -- Sep 08, 1989 / January 15, 2001 / Mar 3 1975
+  - name: date_monddyyyy
+    pattern: '\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[-\s.]?(?:0?[1-9]|[12]\d|3[01])[,\s]+\d{2,4}\b'
+    category: date_of_birth
+    confidence: 0.75
+
+  # YYYY-MM-DD (ISO 8601, keyword gated to reduce false positives)
+  - name: date_iso8601
+    pattern: '\b(?:19|20)\d{2}[-\/](?:0[1-9]|1[0-2])[-\/](?:0[1-9]|[12]\d|3[01])\b'
+    category: date_of_birth
+    confidence: 0.7
+    requires_keyword_proximity: true
+    keywords:
+      - "DOB"
+      - "date of birth"
+      - "birth"
+      - "born"
+      - "date de naissance"
+    keyword_window: 80
+
+  # Text following form labels like "Surname", "Given Name(s)", "Last Name".
+  # Uses a negative lookahead to stop capturing before the next label, so
+  # "Surname: PATEL Given Name(s): HASHITA" produces two separate matches.
+  - name: form_field_name
+    pattern: '(?:(?:sur|last|family|first|given|middle|maiden)\s*(?:name|nom)(?:\s*\(s\))?\s*[:\-]?\s*)([A-Za-z][A-Za-z''\-]{1,}(?:\s+(?!(?:sur|last|family|first|given|middle|maiden)\s*(?:name|nom)(?:\s*\(s\))?)[A-Za-z][A-Za-z''\-]{1,})*)'
+    category: name
+    confidence: 0.85
+
+spacy_mappings:
+  - spacy_label: PERSON
+    category: name
+    confidence: 0.8
+  - spacy_label: GPE
+    category: address
+    confidence: 0.6
+  - spacy_label: DATE
+    category: date_of_birth
+    confidence: 0.5
+
+llm_prompt_context: >
+  This document may contain Canadian personal information governed by PIPEDA.
+  Look for: full names, Social Insurance Numbers (SIN), phone numbers,
+  email addresses, health card numbers, mailing addresses, dates of birth,
+  passport numbers, and financial account numbers.
