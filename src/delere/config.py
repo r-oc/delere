@@ -3,6 +3,15 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 
+class OcrConfig(BaseModel):
+    """Controls OCR behavior for scanned/image-only pages."""
+
+    enabled: bool = False
+    language: str = "eng"
+    min_text_threshold: int = 10
+    dpi: int = 300
+
+
 class DetectorConfig(BaseModel):
     """Controls which detection layers are active and their settings."""
 
@@ -37,3 +46,4 @@ class AppConfig(BaseModel):
     review_mode: bool = False
     detector: DetectorConfig = Field(default_factory=DetectorConfig)
     redaction: RedactionConfig = Field(default_factory=RedactionConfig)
+    ocr: OcrConfig = Field(default_factory=OcrConfig)
