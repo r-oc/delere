@@ -1,0 +1,212 @@
+name: hipaa
+display_name: "HIPAA (US Healthcare)"
+description: >
+  Health Insurance Portability and Accountability Act. The Safe Harbor
+  de-identification method requires removal of all 18 identifier types
+  from protected health information (PHI). This profile targets those
+  18 categories. Note: ZIP codes where the first 3 digits correspond to
+  a geographic area with fewer than 20,000 people must be treated as
+  identifiers (Safe Harbor restricted prefixes).
+version: "1.0"
+
+categories:
+  - name
+  - email
+  - phone
+  - ssn
+  - address
+  - date_of_birth
+  - health_id
+  - medical_record_number
+  - financial
+  - ip_address
+  - url
+  - vin
+  - device_id
+  - biometric
+  - photo
+  - other
+
+patterns:
+  - name: us_ssn_formatted
+    pattern: '\b(?!000|666|9\d{2})\d{3}-(?!00)\d{2}-(?!0000)\d{4}\b'
+    category: ssn
+    confidence: 0.9
+
+  - name: us_ssn_unformatted
+    pattern: '\b(?!000|666|9\d{2})\d{3}(?!00)\d{2}(?!0000)\d{4}\b'
+    category: ssn
+    confidence: 0.7
+    requires_keyword_proximity: true
+    keywords:
+      - "SSN"
+      - "social security"
+      - "SS#"
+      - "SS #"
+    keyword_window: 60
+
+  - name: email_address
+    pattern: '\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b'
+    category: email
+    confidence: 0.95
+
+  - name: us_phone
+    pattern: '\b(?:\+?1[-\s]?)?\(?[2-9]\d{2}\)?[-\s.]?[2-9]\d{2}[-\s.]?\d{4}\b'
+    category: phone
+    confidence: 0.8
+
+  # Street addresses: number + street name + street type suffix.
+  - name: street_address
+    pattern: '\b\d{1,6}\s+[A-Z][A-Za-z\-'']+(?:\s+[A-Z][A-Za-z\-'']+)*\s+(?:ST|STREET|AVE|AVENUE|BLVD|BOULEVARD|DR|DRIVE|RD|ROAD|LN|LANE|CT|COURT|PL|PLACE|WAY|CRES|CRESCENT|CIR|CIRCLE|TERR|TERRACE|PKWY|PARKWAY|HWY|HIGHWAY|TRAIL|TRL|COVE|RUN|PASS|LOOP|BEND|GLEN|RIDGE|PARK|GATE|PATH|ROW|MEWS|CLOSE)\b'
+    category: address
+    confidence: 0.85
+
+  - name: us_zip_code
+    pattern: '\b\d{5}(?:-\d{4})?\b'
+    category: address
+    confidence: 0.6
+    requires_keyword_proximity: true
+    keywords:
+      - "zip"
+      - "ZIP"
+      - "postal"
+      - "address"
+      - "city"
+      - "state"
+    keyword_window: 80
+
+  - name: ipv4_address
+    pattern: '\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b'
+    category: ip_address
+    confidence: 0.8
+
+  - name: medical_record_number
+    pattern: '\b(?:MRN|MR#|MR #|Medical Record)[:\s#]*\d{6,10}\b'
+    category: medical_record_number
+    confidence: 0.85
+
+  - name: medicare_mbi
+    pattern: '\b[1-9][AC-HJ-NP-RT-Y][AC-HJ-NP-RT-Y0-9]\d[AC-HJ-NP-RT-Y]\d{2}[AC-HJ-NP-RT-Y]{2}\d{2}\b'
+    category: health_id
+    confidence: 0.85
+
+  - name: dea_number
+    pattern: '\b[ABCDEFGHJKLMNPRSTUXabcdefghjklmnprstux][A-Za-z9]\d{7}\b'
+    category: other
+    confidence: 0.75
+    requires_keyword_proximity: true
+    keywords:
+      - "DEA"
+      - "Drug Enforcement"
+      - "prescriber"
+    keyword_window: 60
+
+  - name: npi_number
+    pattern: '\b[1-9]\d{9}\b'
+    category: other
+    confidence: 0.65
+    requires_keyword_proximity: true
+    keywords:
+      - "NPI"
+      - "National Provider"
+      - "provider identifier"
+    keyword_window: 60
+
+  - name: vin_number
+    pattern: '\b[A-HJ-NPR-Z0-9]{17}\b'
+    category: vin
+    confidence: 0.7
+    requires_keyword_proximity: true
+    keywords:
+      - "VIN"
+      - "vehicle identification"
+      - "vehicle ID"
+    keyword_window: 60
+
+  - name: url_pattern
+    pattern: '\bhttps?:\/\/[^\s<>"]+\b'
+    category: url
+    confidence: 0.7
+
+  - name: credit_card_number
+    pattern: '\b(?:4\d{3}|5[1-5]\d{2}|3[47]\d{2}|6(?:011|5\d{2}))[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{0,4}\b'
+    category: financial
+    confidence: 0.9
+
+  - name: date_of_birth_mdy
+    pattern: '\b(?:0?[1-9]|1[0-2])[\/\-](?:0?[1-9]|[12]\d|3[01])[\/\-]\d{2,4}\b'
+    category: date_of_birth
+    confidence: 0.6
+    requires_keyword_proximity: true
+    keywords:
+      - "DOB"
+      - "date of birth"
+      - "birth date"
+      - "born"
+      - "age"
+    keyword_window: 60
+
+  - name: ein_number
+    pattern: '\b\d{2}-\d{7}\b'
+    category: financial
+    confidence: 0.7
+    requires_keyword_proximity: true
+    keywords:
+      - "EIN"
+      - "employer identification"
+      - "tax ID"
+    keyword_window: 60
+
+  - name: date_ddmonyyyy
+    pattern: '\b(?:0?[1-9]|[12]\d|3[01])[-\s]?(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[-\s,]?\d{2,4}\b'
+    category: date_of_birth
+    confidence: 0.75
+
+  - name: date_monddyyyy
+    pattern: '\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[-\s.]?(?:0?[1-9]|[12]\d|3[01])[,\s]+\d{2,4}\b'
+    category: date_of_birth
+    confidence: 0.75
+
+  - name: date_iso8601
+    pattern: '\b(?:19|20)\d{2}[-\/](?:0[1-9]|1[0-2])[-\/](?:0[1-9]|[12]\d|3[01])\b'
+    category: date_of_birth
+    confidence: 0.7
+    requires_keyword_proximity: true
+    keywords:
+      - "DOB"
+      - "date of birth"
+      - "birth"
+      - "born"
+    keyword_window: 80
+
+  - name: form_field_name
+    pattern: '(?:(?:sur|last|family|first|given|middle|maiden|patient)\s*(?:name)(?:\s*\(s\))?\s*[:\-]?\s*)([A-Za-z][A-Za-z''\-]{1,}(?:\s+(?!(?:sur|last|family|first|given|middle|maiden|patient)\s*(?:name)(?:\s*\(s\))?)[A-Za-z][A-Za-z''\-]{1,})*)'
+    category: name
+    confidence: 0.85
+
+spacy_mappings:
+  - spacy_label: PERSON
+    category: name
+    confidence: 0.8
+  - spacy_label: GPE
+    category: address
+    confidence: 0.6
+  - spacy_label: LOC
+    category: address
+    confidence: 0.5
+  - spacy_label: DATE
+    category: date_of_birth
+    confidence: 0.5
+  - spacy_label: FAC
+    category: address
+    confidence: 0.5
+
+llm_prompt_context: >
+  This document may contain Protected Health Information (PHI) governed by
+  HIPAA. The Safe Harbor method requires identification and removal of all
+  18 identifier types: names, geographic data smaller than state, dates
+  (except year), phone numbers, fax numbers, email addresses, SSNs, medical
+  record numbers, health plan beneficiary numbers, account numbers,
+  certificate/license numbers, vehicle identifiers, device identifiers,
+  web URLs, IP addresses, biometric identifiers, full-face photographs,
+  and any other unique identifying number or code.
