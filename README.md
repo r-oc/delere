@@ -6,6 +6,8 @@
 
 Delere is a document redaction tool built for regulated industries where data privacy isn't optional. Unlike simple redaction tools that draw black boxes over sensitive text, delere **removes PII directly from the PDF content stream**, strips all document metadata, and rewrites the file from scratch. The original text is not hidden. It is destroyed, with no way to recover it.
 
+> **Disclaimer:** Delere is a general-purpose redaction tool. The built-in compliance profiles (PIPEDA, GDPR, HIPAA) provide broad coverage for common PII patterns, but they are not guaranteed to catch every sensitive identifier in every document type. **This tool is provided as-is and does not constitute legal or compliance advice.** Organizations operating under regulatory obligations should validate redaction outputs against their specific requirements. See the [full disclaimer](#disclaimer) below.
+
 ---
 
 ## Why Delere
