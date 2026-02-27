@@ -6,7 +6,7 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from delere.audit.manifest import create_manifest, save_manifest
-from delere.config import AppConfig, DetectorConfig, RedactionConfig
+from delere.config import AppConfig, DetectorConfig, OcrConfig, RedactionConfig
 from delere.core.extractor import extract_text
 from delere.core.models import Detection, RedactionResult
 from delere.core.pipeline import DetectionPipeline
@@ -157,7 +157,16 @@ def _process_single(
 
     console.print(f"Processing [bold]{input_path.name}[/bold]...")
 
-    page_texts = extract_text(input_path)
+    ocr_cfg = config.ocr if config.ocr.enabled else None
+    page_texts = extract_text(input_path, ocr_config=ocr_cfg)
+
+    ocr_pages = frozenset(pt.page_number for pt in page_texts if pt.is_ocr)
+    if ocr_pages:
+        console.print(
+            f"[yellow]OCR applied to {len(ocr_pages)} image-only page(s): "
+            f"{sorted(p + 1 for p in ocr_pages)}[/yellow]"
+        )
+
     detections = pipeline.run(page_texts)
 
     if not detections:
@@ -178,11 +187,13 @@ def _process_single(
         detections,
         config.compliance_profiles,
         review_mode=False,
+        ocr_pages=ocr_pages,
     )
 
     # Generate audit manifest
     manifest = create_manifest(
-        result, detections, input_path, output_path, config.confidence_threshold
+        result, detections, input_path, output_path, config.confidence_threshold,
+        ocr_pages=sorted(ocr_pages),
     )
     manifest_path = save_manifest(manifest, output_path)
 
@@ -240,6 +251,10 @@ def redact(
     ),
     ai: bool = typer.Option(False, "--ai", help="Enable Ollama LLM detector."),
     model: str = typer.Option("llama3.2", "--model", "-m", help="Ollama model name."),
+    ocr: bool = typer.Option(False, "--ocr", help="Enable OCR for scanned/image-only pages."),
+    ocr_language: str = typer.Option(
+        "eng", "--ocr-language", help="Tesseract language code for OCR (e.g., eng, fra, deu)."
+    ),
 ) -> None:
     """Redact PII from a PDF file or directory of PDFs."""
     profile_names = [p.strip() for p in compliance.split(",")]
@@ -249,7 +264,21 @@ def redact(
         confidence_threshold=confidence_threshold,
         review_mode=review_mode,
         detector=DetectorConfig(llm_enabled=ai, llm_model=model),
+        ocr=OcrConfig(enabled=ocr, language=ocr_language),
     )
+
+    if config.ocr.enabled:
+        from delere.core.extractor import is_ocr_available
+
+        if not is_ocr_available():
+            console.print(
+                "[red]OCR requested but Tesseract is not available.[/red]\n"
+                "Install Tesseract: https://github.com/tesseract-ocr/tesseract\n"
+                "  macOS:   brew install tesseract\n"
+                "  Ubuntu:  sudo apt install tesseract-ocr\n"
+                "  Windows: download from GitHub releases"
+            )
+            raise typer.Exit(1)
 
     try:
         profiles = load_profiles(profile_names)

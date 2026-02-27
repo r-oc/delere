@@ -30,12 +30,17 @@ class PDFRedactor:
         detections: list[Detection],
         compliance_profiles: list[str],
         review_mode: bool = False,
+        ocr_pages: frozenset[int] | None = None,
     ) -> RedactionResult:
         """Apply redactions to a PDF and save the result.
 
         In review mode, adds redaction annotation overlays but does not
         apply them, so a human can inspect proposed redactions before
         finalizing. The text remains intact and extractable.
+
+        For pages identified as OCR (image-only), uses IMAGE_NONE instead
+        of IMAGE_REMOVE to paint over the PII region without deleting the
+        entire page image.
         """
         doc = fitz.open(str(input_path))
         page_count = doc.page_count
@@ -43,7 +48,7 @@ class PDFRedactor:
         self._add_redaction_annotations(doc, detections)
 
         if not review_mode:
-            self._apply_redactions(doc)
+            self._apply_redactions(doc, ocr_pages or frozenset())
             self._strip_metadata(doc)
             self._remove_annotations(doc)
             self._flatten(doc)
@@ -73,20 +78,32 @@ class PDFRedactor:
                 rect = fitz.Rect(bbox.x0, bbox.y0, bbox.x1, bbox.y1)
                 page.add_redact_annot(rect, fill=self._config.fill_color)
 
-    def _apply_redactions(self, doc: fitz.Document) -> None:
+    def _apply_redactions(
+        self, doc: fitz.Document, ocr_pages: frozenset[int]
+    ) -> None:
         """Apply all redaction annotations, removing content stream data.
 
-        Uses the most aggressive removal flags:
+        For native text pages uses the most aggressive removal flags:
         - PDF_REDACT_IMAGE_REMOVE: completely removes overlapping images
         - PDF_REDACT_LINE_ART_REMOVE_IF_TOUCHED: removes vector graphics that touch the area
         - PDF_REDACT_TEXT_REMOVE: removes text from the content stream
+
+        For OCR (image-only) pages uses IMAGE_NONE to paint over the PII
+        region within the image instead of removing the entire page image.
         """
-        for page in doc:
-            page.apply_redactions(
-                images=fitz.PDF_REDACT_IMAGE_REMOVE,
-                graphics=fitz.PDF_REDACT_LINE_ART_REMOVE_IF_TOUCHED,
-                text=fitz.PDF_REDACT_TEXT_REMOVE,
-            )
+        for page_num, page in enumerate(doc):
+            if page_num in ocr_pages:
+                page.apply_redactions(
+                    images=fitz.PDF_REDACT_IMAGE_NONE,
+                    graphics=fitz.PDF_REDACT_LINE_ART_NONE,
+                    text=fitz.PDF_REDACT_TEXT_REMOVE,
+                )
+            else:
+                page.apply_redactions(
+                    images=fitz.PDF_REDACT_IMAGE_REMOVE,
+                    graphics=fitz.PDF_REDACT_LINE_ART_REMOVE_IF_TOUCHED,
+                    text=fitz.PDF_REDACT_TEXT_REMOVE,
+                )
 
     def _strip_metadata(self, doc: fitz.Document) -> None:
         """Remove all document-level metadata (Info dict and XMP)."""
